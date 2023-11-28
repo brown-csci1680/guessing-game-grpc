@@ -14,14 +14,12 @@ type ClientInfo struct {
 }
 
 type GameInfo struct {
-	GameLock      sync.Mutex
-	TotalGuesses  int
-	TargetNumber  int32
-	nextClientIdx int // Counter to increment each time we add a new client
+	GameLock     sync.Mutex
+	TotalGuesses int
+	TargetNumber int32
 
-	ClientListLock  sync.Mutex
-	Clients         []*ClientInfo
-	ClientWaitGroup sync.WaitGroup
+	// TODO:  The current version doesn't track clients currently playing the game
+	//nextClientIdx int // Counter to increment each time we add a new client
 }
 
 const (
@@ -37,67 +35,12 @@ func InitializeGame() *GameInfo {
 	}
 }
 
-func (g *GameInfo) NewClient(conn net.Conn) *ClientInfo {
-	clientIndex := g.nextClientIdx
-	g.nextClientIdx++
-
-	ci := &ClientInfo{
-		Id:              clientIndex,
-		Conn:            conn,
-		GameResetChan:   make(chan bool, 1),
-		ServerCloseChan: make(chan bool, 1),
-	}
-	g.ClientWaitGroup.Add(1)
-
-	g.ClientListLock.Lock()
-	g.Clients = append(g.Clients, ci)
-	g.ClientListLock.Unlock()
-
-	return ci
-}
-
-func (g *GameInfo) RemoveClient(target *ClientInfo) {
-	g.ClientListLock.Lock()
-	var idx int
-
-	// Find the client by its pointer and remove it from the list
-	// TODO:  There might be a better way to handle this process,
-	// comments welcome!
-
-	for i, ci := range g.Clients {
-		if ci == target {
-			idx = i
-		}
-	}
-
-	g.Clients = append(g.Clients[:idx], g.Clients[idx+1:]...)
-
-	g.ClientListLock.Unlock()
-
-	g.ClientWaitGroup.Done()
-}
-
-func (g *GameInfo) TerminateClients() {
-	g.ClientListLock.Lock()
-	for _, ci := range g.Clients {
-		ci.ServerCloseChan <- true
-	}
-	g.ClientListLock.Unlock()
-
-	// Wait for all clients to be done
-	g.ClientWaitGroup.Wait()
-}
-
 func (g *GameInfo) ResetGame() {
 	g.GameLock.Lock()
 	defer g.GameLock.Unlock()
 
 	g.TargetNumber = rand.Int31()
 	g.TotalGuesses = 0
-
-	for _, c := range g.Clients {
-		c.GameResetChan <- true
-	}
 }
 
 func (g *GameInfo) DoGuess(n int32) int32 {

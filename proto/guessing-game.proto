@@ -1,0 +1,25 @@
+syntax = "proto3";
+option go_package = "pkg/proto";
+
+service GuessingGame {
+    rpc MakeGuess(Guess) returns (GuessResult) {}
+
+    
+    
+
+}
+
+enum GuessStatus {
+    GUESS_NONE = 0;
+    GUESS_TOO_LOW = 1;
+    GUESS_TOO_HIGH = 2;
+    GUESS_CORRECT = 3;
+}
+
+message Guess {
+    int32 number = 1;
+}
+
+message GuessResult {
+    GuessStatus result = 1;
+}
