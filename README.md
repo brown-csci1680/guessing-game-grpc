@@ -14,7 +14,9 @@ lectures are supported.
 
  ## Setup
 
- You can compile the server using `make`.  
+ You can compile the server using `make`.  To run the client, you will need a
+ Python environment with gRPC--to set this up, you can create a virtual
+ environment using the provided `requirements.txt`.
 
  If you want to change the protobuf spec, you need to recompile the generated
  code.  To do this, you need protobuf and gRPC installed for each language for
